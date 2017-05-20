@@ -112,6 +112,15 @@ proc.streams[7].sub_streams[2].flow_kgs = 5.2164
 proc.streams[7].sub_streams[3].flow_kgs = 0.0
 proc.streams[7].sub_streams[4].flow_kgs = 0.0
 
+reactants = ['methanol', 'oxygen']
+products = ['formaldehyde', 'water']
+stoichiometry = {'methanol':2, 'oxygen':1, 'formaldehyde':2, 'water':2}
+conditions = {'T':400}
+
+form_rxn = reaction("catalytic methanol oxidation", reactants, products, stoichiometry, conditions)
+
+print str(form_rxn)
+
 #expression, solution, ins, outs = proc.overall_mass_balance(component="ALL")
 #expression, solution, ins, outs = proc.overall_mass_balance(component="methanol")
 #expression, solution, ins, outs = proc.overall_mass_balance(component="oxygen")

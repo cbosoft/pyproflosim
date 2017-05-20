@@ -33,16 +33,46 @@ class colors:
 
 class process_node(object):
 
-    type = "blank"
-    key = 0
+    type            = "blank"
+    key             = 0
+    reactions       = list()
+    conversions     = list()
     
-    def __init__(self, type, key):
-        self.type = type
-        self.key = key
+    def __init__(self, type, key, reactions=list(), conversions=list()):
+        self.type           = type
+        self.key            = key
+        self.rections       = reactions
+        self.conversions    = conversions
 
     def __str__(self):
         return "{}[NODE:{}:{}]{}".format(colors.RED, self.type, self.key, colors.RESET)
+
+class reaction(object):
+
+    name = ""
+
+    reactants       = list()
+    products        = list()
+    stoichiometry   = dict()
+    conditions      = dict()
+
+    def __init__(self, name, reactants, products, stoichiometry, conditions):
+        self.name = name
+        self.reactants       = reactants
+        self.products       = products
+        self.stoichiometry  = stoichiometry
+        self.conditions     = conditions
         
+    def __str__(self):
+        r_string = ""
+        p_string = ""
+        for r in self.reactants:
+            r_string += " {} {} +".format(self.stoichiometry[r], r)
+        r_string = r_string[:-1]
+        for p in self.products:
+            p_string += " {} {} +".format(self.stoichiometry[p], p)
+        p_string = p_string[:-2]
+        return "{}[RXN:{}->{}]{}".format(colors.GREEN, r_string, p_string, colors.RESET)
 
 class stream(object):
     
@@ -199,7 +229,7 @@ class process(object):
             if overall_solution[0] == 0.0:
                 the_color = colors.GREEN
             elif not (overall_solution[0] is float and overall_solution[0] is int):
-                the_color = colors.YELLOW
+                the_color = colors.MAGENTA
             elif overall_solution[0] > -1 and overall_solution[0] < 1:
                 the_color = colors.YELLOW
             print "\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET)
