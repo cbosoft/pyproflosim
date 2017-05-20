@@ -10,13 +10,26 @@ from sympy import solve as slv
 verbose = False
 
 class colors:
-    RED   = "\033[1;31m"  
-    BLUE  = "\033[1;34m"
-    CYAN  = "\033[1;36m"
-    GREEN = "\033[0;32m"
-    RESET = "\033[0;0m"
+    RED     = "\033[1;31m"  
+    BLUE    = "\033[1;34m"
+    CYAN    = "\033[1;36m"
+    GREEN   = "\033[0;32m"
+    RESET   = "\033[0;0m"
     BOLD    = "\033[;1m"
     REVERSE = "\033[;7m"
+    GRAY    = "\033[1;30m"
+    YELLOW  = "\033[1;33m"
+    MAGENTA = "\033[1;35m"
+    CRIMSON = "\033[1;38m"
+
+    HT_RED      = "\033[1;41m"
+    HT_GREEN    = "\033[1;42m"
+    HT_BROWN    = "\033[1;43m"
+    HT_BLUE     = "\033[1;44m"
+    HT_MAGENTA  = "\033[1;45m"
+    HT_CYAN     = "\033[1;46m"
+    HT_GRAY     = "\033[1;47m"
+    HT_CRIMSON  = "\033[1;48m"
 
 class process_node(object):
 
@@ -28,7 +41,7 @@ class process_node(object):
         self.key = key
 
     def __str__(self):
-        return "[NODE:{}/{}]".format(self.type, self.key)
+        return "{}[NODE:{}:{}]{}".format(colors.RED, self.type, self.key, colors.RESET)
         
 
 class stream(object):
@@ -45,7 +58,7 @@ class stream(object):
         self.sub_streams = sub_streams
     
     def __str__(self):
-        return "[STREAM \"{}\" FROM {}{}{} TO {}{}{}]".format(self.name, colors.RED, self.from_node, colors.RESET, colors.RED, self.into_node, colors.RESET)
+        return "[STREAM \"{}\" FROM {} TO {}]".format(self.name, self.from_node, self.into_node)
     
     def get_flow_rate(self, units="kgs"):
         total = 0
@@ -132,34 +145,140 @@ class process(object):
             elif s.into_node == node:
                 inputs.append(s)
         return inputs, outputs
-        
-    def overall_mass_balance(self):
+    
+    def nodal_mass_balance(self, node, component="ALL"):
+        if isinstance(node, basestring):
+            node_v = self.nodes[node]
+        else:
+            node_v = node
+
+        in_strms, out_strms = self.get_node_streams(node_v)
+
+        if verbose: 
+            if component == "ALL":
+                print colors.BOLD, "\n TOTAL, NODAL MASS BALANCE", colors.RESET
+            else:
+                print colors.BOLD, "\n {}, NODAL MASS BALANCE".format(component.upper()), colors.RESET
 
         # get total inlet mass flow
-        if verbose: print " INPUT SUM"
+        if verbose: print colors.BOLD, "\n INPUT SUM", colors.RESET
+        inlet_flow = 0
+        for s in in_strms:
+            if verbose: print " \t PROCESSING {}".format(s)
+            if component == "ALL":
+                inlet_flow += s.get_flow_rate()
+            else:
+                for ss in s.sub_streams:
+                    if ss.component.lower() == component.lower():
+                        inlet_flow += ss.flow_kgs
+        
+        # get total outlet mass flow
+        if verbose: print colors.BOLD, "\n OUTPUT SUM", colors.RESET
+        outlet_flow = 0
+        for s in out_strms:
+            if verbose: print " \t PROCESSING {}".format(s)
+            if component == "ALL":
+                outlet_flow += s.get_flow_rate()
+            else:
+                for ss in s.sub_streams:
+                    if ss.component.lower() == component.lower():
+                        outlet_flow += ss.flow_kgs
+        
+        # compare
+        if verbose: print colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET
+        discr = smb('D')
+        overall_expression = inlet_flow - outlet_flow + discr
+        if verbose: print colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET
+        overall_solution = slv(overall_expression, discr)
+
+        if verbose: print colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET
+        if verbose: print "\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET)
+        if verbose: print "\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET)
+        if verbose:
+            the_color = colors.RED
+            if overall_solution[0] == 0.0:
+                the_color = colors.GREEN
+            elif not (overall_solution[0] is float and overall_solution[0] is int):
+                the_color = colors.YELLOW
+            elif overall_solution[0] > -1 and overall_solution[0] < 1:
+                the_color = colors.YELLOW
+            print "\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET)
+        return overall_expression, overall_solution, inlet_flow, outlet_flow
+    
+    def overall_mass_balance(self, component="ALL"):
+        if verbose: 
+            if component == "ALL":
+                print colors.BOLD, "\n TOTAL, OVERALL MASS BALANCE", colors.RESET
+            else:
+                print colors.BOLD, "\n {}, OVERALL MASS BALANCE".format(component.upper()), colors.RESET
+
+        # get total inlet mass flow
+        if verbose: print colors.BOLD, "\n INPUT SUM", colors.RESET
         inlet_flow = 0
         for s in self.streams:
             if s.from_node.type == "input":
                 if verbose: print " \t PROCESSING {}".format(s)
-                inlet_flow += s.get_flow_rate()
+                if component == "ALL":
+                    inlet_flow += s.get_flow_rate()
+                else:
+                    for ss in s.sub_streams:
+                        if ss.component.lower() == component.lower():
+                            inlet_flow += ss.flow_kgs
         
         # get total outlet mass flow
-        if verbose: print "\n OUTPUT SUM"
+        if verbose: print colors.BOLD, "\n OUTPUT SUM", colors.RESET
         outlet_flow = 0
         for s in self.streams:
             if s.into_node.type == "output":
                 if verbose: print " \t PROCESSING {}".format(s)
-                outlet_flow += s.get_flow_rate()
+                if component == "ALL":
+                    outlet_flow += s.get_flow_rate()
+                else:
+                    for ss in s.sub_streams:
+                        if ss.component.lower() == component.lower():
+                            outlet_flow += ss.flow_kgs
         
         # compare
-        if verbose: print "\n OBTAINING EXPRESSION"
-        overall_expression = inlet_flow - outlet_flow
-        if verbose: print "\n SOLVING EXPRESSION"
-        overall_solution = slv(overall_expression)
+        if verbose: print colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET
+        discr = smb('D')
+        overall_expression = inlet_flow - outlet_flow + discr
+        if verbose: print colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET
+        overall_solution = slv(overall_expression, discr)
 
-        if verbose: print "\n OVERALL BALANCE COMPLETE\n\tINPUT - OUTPUT = 0\n\t{}\n\t{}".format(overall_expression, overall_solution)
+        if verbose: print colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET
+        if verbose: print "\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET)
+        if verbose: print "\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET)
+        if verbose:
+            the_color = colors.RED
+            if overall_solution[0] == 0.0:
+                the_color = colors.GREEN
+            elif overall_solution[0] > -1 and overall_solution[0] < 1:
+                the_color = colors.YELLOW
+            print "\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET)
         return overall_expression, overall_solution, inlet_flow, outlet_flow
         
+    def print_stream_table(self, filep="NOPE", show=False):
+        rows = list()
+        rows.append("Compound")
+        for i in range(0, len(self.streams)):
+            rows[len(rows) - 1] += ",{}".format(self.streams[i].name)
+        for i in range(0, len(self.chemicals.keys())):
+            rows.append(self.chemicals.keys()[i])
+            for s in self.streams:
+                rows[len(rows) - 1] += ",{}".format(s.sub_streams[i].flow_kgs)
+        if filep == "NOPE":
+                pass
+        else:
+            with open(filep, "w") as csvf:
+                for r in rows:
+                    csvf.write(r + "\n")
+        for r in rows:
+            cols = r.split(",")
+            row = ""
+            for c in cols:
+                row += "\t\t  {}".format(c)
+            if show: print row
+
 if __name__ == "__main__":
     # create simple test process:
     #
