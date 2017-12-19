@@ -7,7 +7,7 @@ from sympy import Symbol as smb
 from sympy import symbols as smbs
 from sympy import solve as slv
 
-verbose = False
+verbose = True
 
 class colors:
     RED     = "\033[1;31m"  
@@ -186,15 +186,15 @@ class process(object):
 
         if verbose: 
             if component == "ALL":
-                print colors.BOLD, "\n TOTAL, NODAL MASS BALANCE", colors.RESET
+                print(colors.BOLD, "\n TOTAL, NODAL MASS BALANCE", colors.RESET)
             else:
-                print colors.BOLD, "\n {}, NODAL MASS BALANCE".format(component.upper()), colors.RESET
+                print(colors.BOLD, "\n {}, NODAL MASS BALANCE".format(component.upper()), colors.RESET)
 
         # get total inlet mass flow
-        if verbose: print colors.BOLD, "\n INPUT SUM", colors.RESET
+        if verbose: print(colors.BOLD, "\n INPUT SUM", colors.RESET)
         inlet_flow = 0
         for s in in_strms:
-            if verbose: print " \t PROCESSING {}".format(s)
+            if verbose: print(" \t PROCESSING {}".format(s))
             if component == "ALL":
                 inlet_flow += s.get_flow_rate()
             else:
@@ -203,10 +203,10 @@ class process(object):
                         inlet_flow += ss.flow_kgs
         
         # get total outlet mass flow
-        if verbose: print colors.BOLD, "\n OUTPUT SUM", colors.RESET
+        if verbose: print(colors.BOLD, "\n OUTPUT SUM", colors.RESET)
         outlet_flow = 0
         for s in out_strms:
-            if verbose: print " \t PROCESSING {}".format(s)
+            if verbose: print(" \t PROCESSING {}".format(s))
             if component == "ALL":
                 outlet_flow += s.get_flow_rate()
             else:
@@ -215,15 +215,15 @@ class process(object):
                         outlet_flow += ss.flow_kgs
         
         # compare
-        if verbose: print colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET
+        if verbose: print(colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET)
         discr = smb('D')
         overall_expression = inlet_flow - outlet_flow + discr
-        if verbose: print colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET
+        if verbose: print(colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET)
         overall_solution = slv(overall_expression, discr)
 
-        if verbose: print colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET
-        if verbose: print "\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET)
-        if verbose: print "\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET)
+        if verbose: print(colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET)
+        if verbose: print("\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET))
+        if verbose: print("\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET))
         if verbose:
             the_color = colors.RED
             if overall_solution[0] == 0.0:
@@ -232,22 +232,22 @@ class process(object):
                 the_color = colors.MAGENTA
             elif overall_solution[0] > -1 and overall_solution[0] < 1:
                 the_color = colors.YELLOW
-            print "\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET)
+            print("\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET))
         return overall_expression, overall_solution, inlet_flow, outlet_flow
     
     def overall_mass_balance(self, component="ALL"):
         if verbose: 
             if component == "ALL":
-                print colors.BOLD, "\n TOTAL, OVERALL MASS BALANCE", colors.RESET
+                print(colors.BOLD, "\n TOTAL, OVERALL MASS BALANCE", colors.RESET)
             else:
-                print colors.BOLD, "\n {}, OVERALL MASS BALANCE".format(component.upper()), colors.RESET
+                print(colors.BOLD, "\n {}, OVERALL MASS BALANCE".format(component.upper()), colors.RESET)
 
         # get total inlet mass flow
-        if verbose: print colors.BOLD, "\n INPUT SUM", colors.RESET
+        if verbose: print(colors.BOLD, "\n INPUT SUM", colors.RESET)
         inlet_flow = 0
         for s in self.streams:
             if s.from_node.type == "input":
-                if verbose: print " \t PROCESSING {}".format(s)
+                if verbose: print(" \t PROCESSING {}".format(s))
                 if component == "ALL":
                     inlet_flow += s.get_flow_rate()
                 else:
@@ -256,35 +256,36 @@ class process(object):
                             inlet_flow += ss.flow_kgs
         
         # get total outlet mass flow
-        if verbose: print colors.BOLD, "\n OUTPUT SUM", colors.RESET
+        if verbose: print(colors.BOLD, "\n OUTPUT SUM", colors.RESET)
         outlet_flow = 0
         for s in self.streams:
-            if s.into_node.type == "output":
-                if verbose: print " \t PROCESSING {}".format(s)
-                if component == "ALL":
-                    outlet_flow += s.get_flow_rate()
-                else:
-                    for ss in s.sub_streams:
-                        if ss.component.lower() == component.lower():
-                            outlet_flow += ss.flow_kgs
+            for n in s.into_node:
+                if n.type == "output":
+                    if verbose: print(" \t PROCESSING {}".format(s))
+                    if component == "ALL":
+                        outlet_flow += s.get_flow_rate()
+                    else:
+                        for ss in s.sub_streams:
+                            if ss.component.lower() == component.lower():
+                                outlet_flow += ss.flow_kgs
         
         # compare
-        if verbose: print colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET
+        if verbose: print(colors.BOLD, "\n OBTAINING EXPRESSION", colors.RESET)
         discr = smb('D')
         overall_expression = inlet_flow - outlet_flow + discr
-        if verbose: print colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET
+        if verbose: print(colors.BOLD, "\n SOLVING EXPRESSION", colors.RESET)
         overall_solution = slv(overall_expression, discr)
 
-        if verbose: print colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET
-        if verbose: print "\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET)
-        if verbose: print "\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET)
+        if verbose: print(colors.BOLD, "\n OVERALL BALANCE COMPLETE", colors.RESET)
+        if verbose: print("\t{}INPUT{} - {}OUTPUT{} + {}DISCREPENCY{} = 0".format(colors.GREEN, colors.RESET, colors.BLUE, colors.RESET, colors.MAGENTA, colors.RESET))
+        if verbose: print("\t{}{}{} - {}({}){} + {}{}{} = 0".format(colors.GREEN, inlet_flow, colors.RESET, colors.BLUE, outlet_flow, colors.RESET, colors.MAGENTA, discr, colors.RESET))
         if verbose:
             the_color = colors.RED
             if overall_solution[0] == 0.0:
                 the_color = colors.GREEN
             elif overall_solution[0] > -1 and overall_solution[0] < 1:
                 the_color = colors.YELLOW
-            print "\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET)
+            print("\t{}{}{} = {}{}{}".format(colors.MAGENTA, discr, colors.RESET, the_color, overall_solution[0], colors.RESET))
         return overall_expression, overall_solution, inlet_flow, outlet_flow
         
     def print_stream_table(self, filep="NOPE", show=False):
@@ -307,7 +308,7 @@ class process(object):
             row = ""
             for c in cols:
                 row += "\t\t  {}".format(c)
-            if show: print row
+            if show: print(row)
 
 if __name__ == "__main__":
     # create simple test process:
@@ -352,5 +353,5 @@ if __name__ == "__main__":
     
     expression, solution, ins, outs = proc.overall_mass_balance()
     
-    print "INPUT - OUTPUT = 0\n{} - ({}) = 0\n{}".format(ins, outs, solution)
+    print("INPUT - OUTPUT = 0\n{} - ({}) = 0\n{}".format(ins, outs, solution))
         
