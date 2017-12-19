@@ -4,7 +4,7 @@
 
 Will eventually be able to simulate complex flow in industrial processes and make recommendations for improvement.
 
-However, right now, it can calculate simple mass balances across a process.
+However, right now, it doesn't do much.
 
 Makes use of:
 
