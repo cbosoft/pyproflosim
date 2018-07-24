@@ -8,9 +8,19 @@ class Stream(object):
 
     def __iter__(self):
         return self.sub_streams.__iter__()
+
+    def __str__(self):
+        return f"Stream from [{self.from_node}] to [{self.into_node}] ({len(self.sub_streams)} components)"
+
+    def add_component(self, component, flowrate_kgs):
+        if component not in [ss.component for ss in self.sub_streams]:
+            self.sub_streams.append(SubStream(component, flowrate_kgs))
+        else:
+            ss = [ss.component for ss in self.sub_streams if ss.component == component][0]
+            ss.flowrate_kgs = flowrate_kgs
         
 class SubStream(object):
     
-    def __init__(self, component, flow_kgs):
+    def __init__(self, component, flowrate_kgs):
         self.component = component
-        self.flow_kgs = flow_kgs
+        self.flowrate_kgs = flowrate_kgs
