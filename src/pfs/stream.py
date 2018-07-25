@@ -1,3 +1,5 @@
+from sympy import Symbol
+
 class Stream(object):
     
     def __init__(self, name, from_node, into_node, sub_streams=list()):
@@ -18,6 +20,15 @@ class Stream(object):
         else:
             ss = [ss.component for ss in self.sub_streams if ss.component == component][0]
             ss.flowrate_kgs = flowrate_kgs
+
+    def get_flow_rate_kgs(self):
+        if len(self.sub_streams):
+            total = 0.0
+            for ss in self.sub_streams:
+                total += ss.flowrate_kgs
+            return total
+        else:
+            return Symbol(f'Mdot_{self.name}')
         
 class SubStream(object):
     

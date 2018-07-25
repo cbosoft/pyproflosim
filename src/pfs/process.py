@@ -1,5 +1,3 @@
-from enum import Enum
-
 import pubchempy
 from sympy import Symbol
 from sympy import symbols as Symbols
@@ -11,6 +9,7 @@ from pfs.colours import C_CMD, C_OKY, C_USR, C_WNG, C_SCS, C_ALT, C_ERR, C_SPL, 
 from pfs.stream import Stream, SubStream
 from pfs.chemical_component import ChemicalComponent
 from pfs.exception import PFS_Error, PFS_Key_Duplication_Error
+from pfs.types import NodeType, UnitType
 
 
 class Process(object):
@@ -20,6 +19,7 @@ class Process(object):
         self.chemicals = dict()
         self.graph     = Graph()
         self.nodes     = dict()
+        self.streams   = dict()
 
         
     def __repr__(self):
@@ -37,44 +37,33 @@ class Process(object):
         return
         
 
-    def add_node(self, name, n_type):
+    def add_node(self, name, n_type, u_type):
 
         if name in self.nodes:
             raise PFS_Key_Duplication_Error("Cannot have multiple nodes with the same name!")
         
         idx = len(self.graph)
-        pn = ProcessNode(idx, name, n_type)
+        pn = ProcessNode(idx, name, n_type, u_type)
         self.graph.add_node(pn)
         self.nodes[name] = pn
         return
     
 
     def add_stream(self, name, from_node, into_node, sub_streams=list()):
-        self.graph.add_edge(
-            from_node,
-            into_node,
-            stream=Stream(
-                name,
-                from_node,
-                into_node,
-                sub_streams
-            )
-        )
+        if name in self.streams: raise PFS_Key_Duplication_Error('Cannot have multiple streams with the same name')
+        stream = Stream(name, from_node, into_node, sub_streams)
+        self.streams[name] = stream
+        self.graph.add_edge(from_node, into_node, stream=stream)
         return
 
+    
     def get_streams(self):
-        return [data['stream'] for __,__,data in self.graph.edges.data()]
-
-    def get_stream(self, name):
-        for stream in self.get_streams():
-            if stream.name == name:
-                return stream
-        raise PFS_Error(f'Stream \'{name}\' not found!')
+        return [stream for __, stream in self.streams.items()]
 
     
     def get_node_streams(self, node):
-        inputs = [s for s in self.streams if s.into_node == node]
-        outputs = [s for s in self.streams if s.from_node == node]
+        inputs = [s for __, s in self.streams.items() if s.into_node == node]
+        outputs = [s for __, s in self.streams.items() if s.from_node == node]
         return inputs, outputs
     
     
@@ -88,7 +77,7 @@ class Process(object):
         inlet_flow = 0
         for s in in_strms:
             if component == "ALL":
-                inlet_flow += s.get_flow_rate()
+                inlet_flow += s.get_flow_rate_kgs()
             else:
                 for ss in s.sub_streams:
                     if ss.component.lower() == component.lower():
@@ -98,7 +87,7 @@ class Process(object):
         outlet_flow = 0
         for s in out_strms:
             if component == "ALL":
-                outlet_flow += s.get_flow_rate()
+                outlet_flow += s.get_flow_rate_kgs()
             else:
                 for ss in s.sub_streams:
                     if ss.component.lower() == component.lower():
@@ -108,7 +97,7 @@ class Process(object):
         discrepency = Symbol('D')
         overall_expression = inlet_flow - outlet_flow + discrepency
         overall_solution = solve(overall_expression, discrepency)
-        return overall_expression, overall_solution, inlet_flow, outlet_flow
+        return str(overall_expression)+" = 0", overall_solution, inlet_flow, outlet_flow
 
     
     def overall_mass_balance(self, component="ALL"):
@@ -175,7 +164,7 @@ class Process(object):
 class ProcessNode(object):
 
     
-    def __init__(self, idx, name, n_type, u_type=UnitType.JUNCTION):
+    def __init__(self, idx, name, n_type, u_type):
 
         assert type(n_type) is NodeType
         
@@ -195,23 +184,3 @@ class ProcessNode(object):
         assert type(stream) is Stream
         self.streams.append(stream)
         return
-
-class PFS_Enum(Enum):
-
-    def __str__(self):
-        return f"{self.name.lower()}"
-    
-    def __repr__(self):
-        return str(self)
-    
-class NodeType(PFS_Enum):
-    INPUT = 0
-    INTER = 1
-    OUTPUT = 2
-
-class UnitType(PFS_Enum):
-    INLET = 0
-    OUTLET = 1
-    JUNCTION = 2
-    REACTOR = 3
-    ABSORBER = 4 # and so on
