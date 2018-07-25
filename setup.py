@@ -38,5 +38,5 @@ setup(
         ]
     },
 
-    install_requires=['networkx', 'pubchempy', 'sympy', 'numpy']
+    install_requires=['networkx', 'pubchempy', 'sympy', 'numpy', 'matplotlib']
 )
