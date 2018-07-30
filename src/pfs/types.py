@@ -12,10 +12,12 @@ class NodeType(PFS_Enum):
     INPUT = 0
     INTER = 1
     OUTPUT = 2
+    OUTSIDE = 3
 
 class UnitType(PFS_Enum):
     INLET = 0
     OUTLET = 1
     JUNCTION = 2
     REACTOR = 3
-    ABSORBER = 4 # and so on
+    ABSORBER = 4
+    # and so on
