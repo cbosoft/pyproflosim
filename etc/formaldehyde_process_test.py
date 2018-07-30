@@ -58,19 +58,19 @@ ppfs.verbose = True
 # == -- == -- from: Stream Table = -- ==
 # == -- == -- == -- == -- == -- == -- ==
 
-## Stream 1
+## Stream 1 - methanol inlet
 proc.streams[0].sub_streams[0].flow_kgs = 3.9466
 for i in range(1, len(proc.streams[0].sub_streams)):
     proc.streams[0].sub_streams[i].flow_kgs = 0.0
 
-## Stream 2
+## Stream 2 - air inlet
 proc.streams[1].sub_streams[0].flow_kgs = 0.0
 proc.streams[1].sub_streams[1].flow_kgs = 1.52821
 proc.streams[1].sub_streams[2].flow_kgs = 5.208
 proc.streams[1].sub_streams[3].flow_kgs = 0.0
 proc.streams[1].sub_streams[4].flow_kgs = 0.0
 
-## Stream 3
+## Stream 3 - gas recycle
 proc.streams[2].sub_streams[0].flow_kgs = 0.0
 proc.streams[2].sub_streams[1].flow_kgs = 0.4058
 proc.streams[2].sub_streams[2].flow_kgs = 24.127
@@ -91,7 +91,7 @@ proc.streams[4].sub_streams[2].flow_kgs = 29.344
 proc.streams[4].sub_streams[3].flow_kgs = 2.775
 proc.streams[4].sub_streams[4].flow_kgs = 1.665
 
-## Stream 6
+## Stream 6 - product outlet
 proc.streams[5].sub_streams[0].flow_kgs = 0.9866
 proc.streams[5].sub_streams[1].flow_kgs = 0.0
 proc.streams[5].sub_streams[2].flow_kgs = 0.0
