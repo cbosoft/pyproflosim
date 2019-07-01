@@ -1,19 +1,14 @@
-import pubchempy
 from sympy import Symbol
-from sympy import symbols as Symbols
-from sympy import solve
 from networkx import MultiDiGraph as Graph
-from networkx import all_simple_paths
-import numpy as np
 
-from pfs.data import components
-from pfs.colours import C_CMD, C_OKY, C_USR, C_WNG, C_SCS, C_ALT, C_ERR, C_SPL, C_RST
-from pfs.chemical_component import ChemicalComponent
-from pfs.exception import PFS_Error, PFS_Key_Duplication_Error
-from pfs.types import NodeType, UnitType
+from nodes import NodeType
+from units import UnitType
+from chemical_component import ChemicalComponent
+from exception import PFS_Key_Duplication_Error
 
+components = dict()
 
-class Process(object):
+class Process:
                     
 
     def __init__(self):
@@ -27,15 +22,15 @@ class Process(object):
         streams = ''.join('\t'+str(data['stream'])+'\n' for __, __, data in self.graph.edges.data())
         return f"Process with nodes:\n{nodes}streams:\n{streams}"
 
+
     def __next__(self):
         for edge in self.graph.edges():
             yield edge['stream']
-        
+
 
     def add_component(self, name):
         components[name] = ChemicalComponent(name)
-        return
-        
+
 
     def add_node(self, name, n_type, u_type):
 
@@ -48,25 +43,27 @@ class Process(object):
         print(list(self.graph.nodes())[-1])
         print(self.nodes[name])
         print(self.nodes[name] == list(self.graph.nodes())[-1])
-        return
-    
 
-    def add_stream(self, name, from_node, into_node, sub_streams=dict()):
-        if name in self.streams: raise PFS_Key_Duplication_Error('Cannot have multiple streams with the same name')
+
+    def add_stream(self, name, from_node, into_node, sub_streams=None):
+        if name in self.streams: 
+            raise PFS_Key_Duplication_Error('Cannot have multiple streams with the same name')
+        if sub_streams is None:
+            sub_streams = dict()
         stream = Stream(name, from_node, into_node, sub_streams)
         self.streams[name] = stream
         self.graph.add_edge(from_node, into_node, stream=stream)
-        return
 
-    
+
     def get_streams(self):
         return [stream for __, stream in self.streams.items()]
 
 
     def has_unknowns(self):
-        for __, s in self.streams.items():
-            if not len(s.sub_streams): return True
-            for name, __ in components.items():
+        for dummy, s in self.streams.items():
+            if not s.sub_streams:
+                return True
+            for name, dummy in components.items():
                 try:
                     s.sub_streams[name]
                 except KeyError:
@@ -76,8 +73,8 @@ class Process(object):
 
     def get_unknowns(self):
         unknowns = list()
-        for __, s in self.streams.items():
-            for name, __ in components.items():
+        for dummy, s in self.streams.items():
+            for name, dummy in components.items():
                 try:
                     s.sub_streams[name]
                 except KeyError:
@@ -93,15 +90,15 @@ class Process(object):
 
     def balance(self, component=None):
         bal_expr = 0
-        for i, (__, node) in enumerate(self.nodes.items()):
-            expr, __, __, __ = node.balance(component)
+        for dummy, (dummy, node) in enumerate(self.nodes.items()):
+            expr, dummy, dummy, dummy = node.balance(component)
             if not bal_expr:
                 bal_expr = expr
             else:
                 bal_expr += expr
         return bal_expr
 
-            
+
     def fill_nodes(self):
         # connect streams to nodes
         for stream in self.get_streams():
@@ -109,15 +106,13 @@ class Process(object):
                 stream.from_node.add_stream(stream)
             if stream not in stream.into_node.streams:
                 stream.into_node.add_stream(stream)
-        return
 
-    
-class ProcessNode(object):
 
-    
+class ProcessNode:
+
     def __init__(self, idx, name, n_type, u_type):
 
-        assert type(n_type) is NodeType
+        assert isinstance(n_type, NodeType)
         
         self.idx         = idx
         self.name        = name
@@ -129,26 +124,23 @@ class ProcessNode(object):
             self.streams[name+"_source"] = Stream(name+"_source", None, self)
         elif self.n_type == NodeType.OUTPUT:
             self.streams[name+"_target"] = Stream(name+"_target", self, None)
-        return
 
 
     def __repr__(self):
         return f'Node [{self.idx}/{self.n_type}/{self.name}]'
-    
+
 
     def __eq__(self, other):
-        if type(self) == type(other):
+        if isinstance(self, type(other)):
             return self.streams == other.streams
-        else:
-            return False
+        return False
 
 
     def add_stream(self, stream):
-        assert type(stream) is Stream
+        assert isinstance(stream, Stream)
         self.streams[stream.name] = stream
-        return
 
-    
+
     def sort_streams(self):
         into_streams = [s for __, s in self.streams.items() if s.into_node == self]
         from_streams = [s for __, s in self.streams.items() if s.from_node == self]
@@ -157,8 +149,8 @@ class ProcessNode(object):
 
     def get_unknowns(self, component=None):
         knowns = 0
-        for __, s in self.streams.items():
-            for __, ss in s.sub_streams.items():
+        for dummy, s in self.streams.items():
+            for dummy, ss in s.sub_streams.items():
                 if ss.component == component:
                     knowns += 1
         if component is None:
@@ -168,7 +160,8 @@ class ProcessNode(object):
         return unknowns
 
 
-    def check(self, components):
+    def check(self, _components):
+        ## what does this do?
         pass
 
     
@@ -191,15 +184,19 @@ class ProcessNode(object):
         return overall_expression
 
     
-class Stream(object):
+class Stream:
 
     
-    def __init__(self, name, from_node, into_node, sub_streams=dict()):
+    def __init__(self, name, from_node, into_node, sub_streams=None):
+        
+        if sub_streams is None:
+            sub_streams = dict()
+
         self.name = name
 
-        assert type(from_node) is ProcessNode or from_node == None
-        assert type(into_node) is ProcessNode or into_node == None
-        assert type(sub_streams) is dict
+        assert isinstance(from_node, ProcessNode) or from_node is None
+        assert isinstance(into_node, ProcessNode) or into_node is None
+        assert isinstance(sub_streams, dict)
         
         self.into_node = into_node if into_node else ProcessNode(0, name+"_source", NodeType.OUTSIDE, UnitType.INLET)
         self.from_node = from_node if from_node else ProcessNode(0, name+"_target", NodeType.OUTSIDE, UnitType.OUTLET)
@@ -227,15 +224,14 @@ class Stream(object):
             except KeyError:
                 return Symbol(f'Mdot_{component.name}_{self.name}')
         else:
-            if len(self.sub_streams):
+            if self.sub_streams:
                 total = 0.0
                 for ss in self.sub_streams:
                     total += ss.flowrate_kgs
                 return total
-            else:
-                return Symbol(f'Mdot_{self.name}')
+            return Symbol(f'Mdot_{self.name}')
         
-class SubStream(object):
+class SubStream:
     
     def __init__(self, component, flowrate_kgs):
         self.component = component
