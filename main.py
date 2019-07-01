@@ -1,11 +1,11 @@
 import matplotlib.pyplot as plt
 import networkx as nx
 
-#from pfs.data import components
-#from pfs.colours import C_CMD, C_OKY, C_USR, C_WNG, C_SCS, C_ALT, C_ERR, C_SPL, C_RST
-#from pfs.process import Process, ProcessNode, NodeType, UnitType
-#from pfs.vis import draw
-#from pfs.chemical_component import ChemicalComponent
+from data import components
+from colours import col
+from process import Process, ProcessNode, NodeType, UnitType
+from vis import draw
+from chemical_component import ChemicalComponent
 
 
 def main():

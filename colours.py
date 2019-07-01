@@ -24,17 +24,26 @@ ANSI_BOLD       = u"\u001b[1m"
 ANSI_RESET      = u"\u001b[0m"
 
 ################################################################################
-#   PSF Colours   ##############################################################
+#   PFS Colours   ##############################################################
 
-C_CMD = ANSI_FG_MAGENTA
-C_OKY = ANSI_FG_GREEN
-C_USR = ANSI_FG_YELLOW
-C_WNG = ANSI_FG_RED
+COMMAND = ANSI_FG_MAGENTA
+OKAY = ANSI_FG_GREEN
+USER = ANSI_FG_YELLOW
+WARN = ANSI_FG_RED
      
-C_SCS = ANSI_FG_BLACK + ANSI_BG_GREEN
-C_ALT = ANSI_FG_BLACK + ANSI_BG_YELLOW
-C_ERR = ANSI_FG_YELLOW + ANSI_BG_RED
+C_SCS = ANSI_FG_BLACK + ANSI_BG_GREEN # ??
+C_ALT = ANSI_FG_BLACK + ANSI_BG_YELLOW # ??
+ERROR = ANSI_FG_YELLOW + ANSI_BG_RED
      
 C_SPL = ANSI_FG_RED + ANSI_BOLD
      
-C_RST = ANSI_RESET
+RESET = ANSI_RESET
+
+col = {
+        "cmd" : COMMAND
+        "okay" : OKAY
+        "user" : USER
+        "warn" : WARN
+        "error" : ERROR
+        "reset" : RESET
+}
