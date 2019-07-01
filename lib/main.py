@@ -26,14 +26,19 @@ def main():
     G.add_edge(2,5)
 
     draw(G, "test.pdf")
-
+    
     #question: what is mass flow of ethanol through edge 4?
 
     attrs = nx.get_edge_attributes(G, 'data')
 
     dfs = list(nx.edge_dfs(G))
+
     starts = list()
     ends = list()
+    
+    mixers = list()
+    splitters = list()
+    
     for prv, ths, nxt in zip(dfs[:-2], dfs[1:-1], dfs[2:]):
         if ths[0] != prv[1]:
             starts.append(ths)
