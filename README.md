@@ -1,12 +1,8 @@
 # pyproflosim
 Process Flow Simulator written in Python
 
-## Installation
-```bash
-git clone https://github.com/cbosoft/pyproflosim
-cd pyproflosim
-sudo python setup.py install
-```
+I started writing this when I started learning python, almost just as an
+exercise. I am interested in continuing, but it is currently on hold.
 
 ## Depends
 * [Numpy](http://www.numpy.org/): Mathsy stuff [[Custom permissive license](http://www.numpy.org/license.html)]
