@@ -40,10 +40,10 @@ C_SPL = ANSI_FG_RED + ANSI_BOLD
 RESET = ANSI_RESET
 
 col = {
-        "cmd" : COMMAND
-        "okay" : OKAY
-        "user" : USER
-        "warn" : WARN
-        "error" : ERROR
+        "cmd" : COMMAND,
+        "okay" : OKAY,
+        "user" : USER,
+        "warn" : WARN,
+        "error" : ERROR,
         "reset" : RESET
 }
