@@ -6,3 +6,4 @@ src/*egg*
 *.pdf
 .mypy_cache
 */.mypy_cahce
+__pycache__
